@@ -6,9 +6,12 @@ import fetchWeekly from './data/fetchWeekly';
 import fetchData from './data/fetchData';
 import queue from './data/queue';
 import { searchTemplate } from './screens/Search';
+import { GridButton } from 'react-native-carplay/lib/interfaces/GridButton';
+import { Editions } from './screens/Editions';
 
 export type RootStackParamList = {
-  TabBar: undefined;
+  Editions: {}
+  TabBar: {edition: GridButton }
   NowPlaying: { article: Part }
 }
 
