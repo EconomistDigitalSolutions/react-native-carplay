@@ -4,9 +4,12 @@ import { CarPlay, InformationTemplate, ListTemplate, TabBarTemplate, AlertTempla
 import { Part } from './types/content';
 import fetchWeekly from './data/fetchWeekly';
 import queue from './data/queue';
+import { GridButton } from 'react-native-carplay/lib/interfaces/GridButton';
+import { Editions } from './screens/Editions';
 
 export type RootStackParamList = {
-  TabBar: undefined;
+  Editions: {}
+  TabBar: {edition: GridButton }
   NowPlaying: { article: Part }
 }
 
