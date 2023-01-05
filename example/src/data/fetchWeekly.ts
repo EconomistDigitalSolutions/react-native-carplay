@@ -50,7 +50,7 @@ const fetchWeekly = async (path: string) => {
       }
 
       sections[sectionIndex].items.push({
-        text: article.print?.title || article.title
+        text: article.title
       })
     }
   })

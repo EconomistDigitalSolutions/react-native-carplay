@@ -35,14 +35,10 @@ class AudioQueue {
   }
 
   next () {
-    const nextAudioTrack = this.audioTracks.shift()
+    const nextAudioTrack = this.audioTracks[0]
 
     if (nextAudioTrack) {
-      SoundPlayer.playUrl(nextAudioTrack?.url)
-
-      this.currentTrack = nextAudioTrack
-
-      this.onQueueChange()
+      this.play(nextAudioTrack)
     } else {
       this.currentTrack = undefined
     }
@@ -50,6 +46,8 @@ class AudioQueue {
 
   play (audioTrack: AudioTrack) {
     this.currentTrack = audioTrack
+
+    this.audioTracks = this.audioTracks.filter((a) => a.title !== audioTrack.title)
 
     SoundPlayer.playUrl(audioTrack.url)
 

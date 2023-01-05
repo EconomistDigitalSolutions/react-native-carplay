@@ -22,6 +22,8 @@ const fetchData = async (path: string) => {
 
     const data = await response.json()
 
+    console.log(data)
+
     const articles: Part[] = data.data?.section?.hasPart?.parts
 
     const audioArticles = articles?.filter((article) => article?.audio?.main) ?? []
@@ -33,27 +35,25 @@ const fetchData = async (path: string) => {
     const sections: ListSection[] = []
 
     audioArticles.forEach((article) => {
-        const articleSection = article.articleSection?.internal?.length && article.articleSection?.internal?.length > 0 && article.articleSection?.internal[0]
+      const articleSection = article.articleSection?.internal?.length && article.articleSection?.internal?.length > 0 && article.articleSection?.internal[0]
 
-        if (articleSection) {
-            const sectionTitle = articleSection.title;
-            let sectionIndex = sections.findIndex((s) => s.header === sectionTitle)
+      if (articleSection) {
+        const sectionTitle = articleSection.title;
+        let sectionIndex = sections.findIndex((s) => s.header === sectionTitle)
 
-            if (sectionIndex === -1) {
-                sections.push({
-                    header: sectionTitle,
-                    items: [{
-                        text: article.print?.title || article.title
-                    }]
-                })
+        if (sectionIndex === -1) {
+          sections.push({
+            header: sectionTitle,
+            items: []
+          })
 
-                sectionIndex = sections.length - 1
-            }
-
-            sections[sectionIndex].items.push({
-                text: article.print?.title || article.title
-            })
+          sectionIndex = sections.length - 1
         }
+
+        sections[sectionIndex].items.push({
+          text: article.title,
+        })
+      }
     })
 
     return { articles: audioArticles, items, sections }

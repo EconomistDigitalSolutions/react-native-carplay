@@ -49,7 +49,7 @@ const fetchEditions = async (paths: string[]) => {
         }
 
         sections[sectionIndex].items.push({
-          text: article.print?.title || article.title
+          text: article.title
         })
       }
     })

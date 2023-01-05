@@ -17,6 +17,7 @@
     "babel-plugin-dotenv-import": "^3.0.1",
     "date-fns": "^2.29.3",
     "lodash": "^4.17.21",
+    "moment": "^2.29.4",
     "nanoid": "3.1.25",
     "react": "17.0.1",
     "react-native": "0.64.2",

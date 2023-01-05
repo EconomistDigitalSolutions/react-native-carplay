@@ -1,10 +1,19 @@
 
-import { CarPlay, ListTemplate, SearchTemplate } from 'react-native-carplay';
-import { onAudioPress } from '../App';
+import { CarPlay, ListTemplate, SearchTemplate, InformationTemplate } from 'react-native-carplay';
+import { onAudioPress } from './Article';
 import { search } from '../data/search';
 
 let query = ''
 let searchResults : any[] = [];
+
+export const searchPlacholderTemplate = new InformationTemplate({
+  id: 'search',
+  title: 'Search',
+  items: [],
+  actions: [],
+  onActionButtonPressed: () => {},
+  tabSystemImg: 'magnifyingglass'
+})
 
 export const searchTemplate = new SearchTemplate({
   async onSearch(q: string) {
