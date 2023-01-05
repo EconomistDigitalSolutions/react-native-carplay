@@ -11,7 +11,7 @@ import { RootStackParamList } from '../App';
 
 export function TabBar() {
   const { params } = useRoute<RouteProp<RootStackParamList, 'TabBar'>>()
-  const { edition } = params || { id: "/content/f0e872f2ipoun91v1goki0jb4va2v5ei" }
+  const edition = { id: "/content/f0e872f2ipoun91v1goki0jb4va2v5ei" }
 
   const navigation = useNavigation();
   const [articles, setArticles] = useState<Part[]>([])

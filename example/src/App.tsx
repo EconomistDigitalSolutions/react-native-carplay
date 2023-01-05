@@ -1,15 +1,15 @@
 import React, { useEffect, useState, useRef } from 'react';
 import { Text, View } from 'react-native';
-import { CarPlay, InformationTemplate, ListTemplate, TabBarTemplate, AlertTemplate, NowPlayingTemplate } from 'react-native-carplay';
+import { CarPlay, ListTemplate, TabBarTemplate, AlertTemplate, NowPlayingTemplate, GridTemplate } from 'react-native-carplay';
 import { Part } from './types/content';
-import fetchWeekly from './data/fetchWeekly';
 import queue from './data/queue';
 import { GridButton } from 'react-native-carplay/lib/interfaces/GridButton';
-import { Editions } from './screens/Editions';
+import fetchContent from './data/fetchContent';
+import fetchWeekly from './data/fetchWeekly';
+import { waitForDebugger } from 'inspector';
 
 export type RootStackParamList = {
-  Editions: {}
-  TabBar: {edition: GridButton }
+  TabBar: {}
   NowPlaying: { article: Part }
 }
 
@@ -17,26 +17,29 @@ const DEC24_REF = "/content/f0e872f2ipoun91v1goki0jb4va2v5ei"
 const DEC17_REF = "/content/mkl0ncokb3kju08rpusfeptidohkvmcr"
 const DEC10_REF = "/content/c6btp3bpqls69m9ivokt8da56jdi2iti"
 
-const getTabBarTemplates = (articles, sections) => {
-  const homeTab = new InformationTemplate({
-    title: 'Home',
-    items: [],
-    actions: [],
-    onActionButtonPressed: () => {},
-    tabTitle: 'Home',
-    tabSystemImg: 'house'
-  })
+const editionRefs = [DEC24_REF, DEC17_REF, DEC10_REF];
 
-  const weeklyTab = new ListTemplate({
+const getTabBarTemplates = (editions, articles, sections) => {
+  const homeTab = new ListTemplate({
     id: 'weekly',
     sections: sections,
     title: 'Weekly',
     onItemSelect: async ({ index }) => {
       onArticlePress(articles[index])
     },
-    tabTitle: 'Weekly',
+    tabSystemImg: 'house'
+  })
+
+  let editionsTab: any = null;
+
+  editionsTab = new GridTemplate({
+    title: 'Editions',
+    buttons: [editions],
+    onButtonPressed: async ({ index }) => {
+      onEditionPress(editions[index])
+    },
     tabSystemImg: 'magazine'
-  });
+  })
 
   const queueTab = new ListTemplate({
     title: 'Queue',
@@ -48,20 +51,23 @@ const getTabBarTemplates = (articles, sections) => {
         }))
       }
     ],
-    tabTitle: 'Queue',
     tabSystemImg: 'list.triangle'
   })
+  return [homeTab, editionsTab, queueTab]
+}
 
-  const searchTab = new InformationTemplate({
-    title: 'Search',
-    items: [],
-    actions: [],
-    onActionButtonPressed: () => {},
-    tabTitle: 'Search',
-    tabSystemImg: 'magnifyingglass'
+const onEditionPress = async (edition: GridButton) => {
+  const weekly = await fetchWeekly(edition.id);
+
+  new ListTemplate({
+    id: 'weekly',
+    sections: weekly.sections,
+    title: 'Weekly',
+    onItemSelect: async ({ index }) => {
+      onArticlePress(weekly.articles[index])
+    },
+    tabSystemImg: 'house'
   })
-
-  return [homeTab, weeklyTab, queueTab, searchTab]
 }
 
 const onArticlePress = (article: Part) => {
@@ -175,8 +181,8 @@ export const App = () => {
   });
 
   useEffect(() => {
-    fetchWeekly(DEC24_REF).then(({ articles, sections }) => {
-      const templates = getTabBarTemplates(articles, sections)
+    fetchContent(DEC24_REF, editionRefs).then(({ articles, sections, editions }) => {
+      const templates = getTabBarTemplates(editions, articles, sections)
 
       tabBarRef.current?.updateTemplates({
         templates,
@@ -196,7 +202,7 @@ export const App = () => {
           })
         })
 
-        const templates = getTabBarTemplates(articles, sections)
+        const templates = getTabBarTemplates(editions, articles, sections)
 
         tabBarRef.current?.updateTemplates({
           templates,
