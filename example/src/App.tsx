@@ -20,6 +20,7 @@ const DEC10_REF = "/content/c6btp3bpqls69m9ivokt8da56jdi2iti"
 const editionRefs = [DEC24_REF, DEC17_REF, DEC10_REF];
 
 const getTabBarTemplates = (editions, articles, sections) => {
+  console.log({ sections })
   const homeTab = new ListTemplate({
     id: 'weekly',
     sections: sections,
@@ -30,12 +31,12 @@ const getTabBarTemplates = (editions, articles, sections) => {
     tabSystemImg: 'house'
   })
 
-  let editionsTab: any = null;
-
-  editionsTab = new GridTemplate({
+  const editionsTab = new ListTemplate({
+    id: 'editions',
     title: 'Editions',
-    buttons: [editions],
-    onButtonPressed: async ({ index }) => {
+    // sections: [editions.map((edition) => edition.id)],
+    sections: [ { header: "Editions", items: editions.map((edition) => { return { text: edition.titleVariants[0].substring(0, 10) } }) } ],
+    onItemSelect: async ({ index }) => {
       onEditionPress(editions[index])
     },
     tabSystemImg: 'magazine'
@@ -57,9 +58,11 @@ const getTabBarTemplates = (editions, articles, sections) => {
 }
 
 const onEditionPress = async (edition: GridButton) => {
+  console.log({ edition })
   const weekly = await fetchWeekly(edition.id);
+  console.log({ weekly })
 
-  new ListTemplate({
+  const templ = new ListTemplate({
     id: 'weekly',
     sections: weekly.sections,
     title: 'Weekly',
@@ -68,6 +71,8 @@ const onEditionPress = async (edition: GridButton) => {
     },
     tabSystemImg: 'house'
   })
+
+  console.log({ templ })
 }
 
 const onArticlePress = (article: Part) => {
