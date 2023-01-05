@@ -3,10 +3,7 @@ import { Text, View } from 'react-native';
 import { CarPlay, ListTemplate, TabBarTemplate, AlertTemplate, NowPlayingTemplate, GridTemplate } from 'react-native-carplay';
 import { Part } from './types/content';
 import queue from './data/queue';
-import { GridButton } from 'react-native-carplay/lib/interfaces/GridButton';
 import fetchContent from './data/fetchContent';
-import fetchWeekly from './data/fetchWeekly';
-import { waitForDebugger } from 'inspector';
 
 export type RootStackParamList = {
   TabBar: {}
@@ -35,8 +32,9 @@ const getTabBarTemplates = (editions, articles, sections) => {
     id: 'editions',
     title: 'Editions',
     // sections: [editions.map((edition) => edition.id)],
-    sections: [ { header: "Editions", items: editions.map((edition) => { return { text: edition.titleVariants[0].substring(0, 10) } }) } ],
+    sections: [ { header: "Editions", items: editions.map((edition) => { return { text: edition.date } }) } ],
     onItemSelect: async ({ index }) => {
+      console.log('item selected!!!')
       onEditionPress(editions[index])
     },
     tabSystemImg: 'magazine'
@@ -57,22 +55,19 @@ const getTabBarTemplates = (editions, articles, sections) => {
   return [homeTab, editionsTab, queueTab]
 }
 
-const onEditionPress = async (edition: GridButton) => {
-  console.log({ edition })
-  const weekly = await fetchWeekly(edition.id);
-  console.log({ weekly })
-
+const onEditionPress = async (edition) => {
   const templ = new ListTemplate({
-    id: 'weekly',
-    sections: weekly.sections,
-    title: 'Weekly',
+    id: `${edition.date}`,
+    sections: edition.sections,
+    title: `Weekly - ${edition.date}`,
     onItemSelect: async ({ index }) => {
-      onArticlePress(weekly.articles[index])
+      onArticlePress(edition.articles[index])
     },
-    tabSystemImg: 'house'
   })
 
   console.log({ templ })
+  console.log('PUSHING!')
+  CarPlay.pushTemplate(templ)
 }
 
 const onArticlePress = (article: Part) => {
@@ -100,6 +95,7 @@ const onArticlePress = (article: Part) => {
       }
     ],
     onActionButtonPressed: ({ id }) => {
+
       switch(id) {
         case 'play': {
           if (article.audio?.main?.url?.canonical) {
@@ -109,7 +105,6 @@ const onArticlePress = (article: Part) => {
               url: article.audio?.main?.url?.canonical
             })
           }
-
           CarPlay.dismissTemplate();
 
           // CarPlay.pushTemplate(new NowPlayingTemplate({
@@ -195,6 +190,8 @@ export const App = () => {
       });
 
       queue.addListener(() => {
+        console.log({listeners: queue.getListeners()})
+
         const currentAudioTrack = queue.getCurrentTrack();
 
         sections.forEach((section) => {
