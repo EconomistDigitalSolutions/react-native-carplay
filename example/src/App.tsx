@@ -109,15 +109,7 @@ const getTabBarTemplates = (weeklyData, podcastData) => {
     tabSystemImg: 'house',
     onButtonPressed(e) {
       if (e.id === 'Search') {
-        CarPlay.pushTemplate(new InformationTemplate({
-          title: 'Search',
-          items: [],
-          actions: [{id: 'search', title: 'search'}],
-          onActionButtonPressed: () => {
-            CarPlay.pushTemplate(searchTemplate)
-          },
-          tabSystemImg: 'magnifyingglass'
-        }))
+        CarPlay.pushTemplate(searchTemplate)
       } else {
         const data = HOME_TAB_DATA.find((item) => item.id === e.id)
         onHomeItemPress(data)
