@@ -136,9 +136,11 @@ const getTabBarTemplates = (weeklyData, podcastData) => {
 }
 
 const onEditionPress = async (edition: GridButton) => {
+  console.log({ edition })
   const weekly = await fetchWeekly(edition.id);
+  console.log({ weekly })
 
-  new ListTemplate({
+  const templ = new ListTemplate({
     id: 'weekly',
     sections: weekly.sections,
     title: 'Weekly',
@@ -147,6 +149,8 @@ const onEditionPress = async (edition: GridButton) => {
     },
     tabSystemImg: 'house'
   })
+
+  console.log({ templ })
 }
 
 const onHomeItemPress = async (data) => {
