@@ -1,7 +1,7 @@
 import React, { useEffect, useState, useRef } from 'react';
 import { Text, View } from 'react-native';
 import { CarPlay, InformationTemplate, ListTemplate, TabBarTemplate, AlertTemplate, NowPlayingTemplate, GridTemplate } from 'react-native-carplay';
-import { Part, BlogType, CollectionType } from './types/content';
+import { Part } from './types/content';
 import fetchWeekly from './data/fetchWeekly';
 import fetchData from './data/fetchData';
 import { searchTemplate } from './screens/Search';
@@ -9,16 +9,20 @@ import queue, { AudioTrack } from './data/queue';
 import fetchPodcasts from './data/fetchPodcasts';
 import { GridButton } from 'react-native-carplay/lib/interfaces/GridButton';
 import fetchContent from './data/fetchContent';
-import { waitForDebugger } from 'inspector';
 
 export type RootStackParamList = {
   TabBar: {}
   NowPlaying: { article: Part }
 }
 
+const JAN07_REF= "/content/j50lppop61q39rnpaienm2hb8r8h68u7"
 const DEC24_REF = "/content/f0e872f2ipoun91v1goki0jb4va2v5ei"
 const DEC17_REF = "/content/mkl0ncokb3kju08rpusfeptidohkvmcr"
 const DEC10_REF = "/content/c6btp3bpqls69m9ivokt8da56jdi2iti"
+const DEC03_REF = "/content/5gkcciopitck0ing7tq6ur4fmh2gr75a"
+const NOV26_REF = "/content/b12a1v4b9rjhr486lc6aoak121ltmf4n"
+const NOV19_REF = "/content/4degdgvqgnu7ttph0h31fbv8rsbaq96o"
+
 const HOME_TAB_DATA = [
   {
     id: '/content/omi23dr8h15h8c33t2gkb2cju8ap758o',
@@ -61,8 +65,43 @@ const HOME_TAB_DATA = [
     image: require('./images/briefing.jpeg')
   },
 ]
-const editionRefs = [DEC24_REF, DEC17_REF, DEC10_REF];
-
+const editionRefs = [
+  {
+    ref: JAN07_REF,
+    date: "2023-01-07",
+    image: require('./images/editions/2023-01-07.jpeg')
+  },
+  {
+    ref: DEC24_REF,
+    date: "2022-12-24",
+    image: require('./images/editions/2022-12-24.jpeg')
+    },
+  {
+    ref: DEC17_REF,
+    date: "2022-12-17",
+    image: require('./images/editions/2022-12-17.jpeg')
+    },
+  {
+    ref: DEC10_REF,
+    date: "2022-12-10",
+    image: require('./images/editions/2022-12-10.jpeg')
+  },
+  {
+    ref: DEC03_REF,
+    date: "2022-12-03",
+    image: require('./images/editions/2022-12-03.jpeg')
+  },
+  {
+    ref: NOV26_REF,
+    date: "2022-11-26",
+    image: require('./images/editions/2022-11-26.jpeg')
+  },
+  {
+    ref: NOV19_REF,
+    date: "2022-11-19",
+    image: require('./images/editions/2022-11-19.jpeg')
+  },
+];
 
 const getTabBarTemplates = (weeklyData, podcastData) => {
   const homeTab = new GridTemplate({
@@ -75,20 +114,29 @@ const getTabBarTemplates = (weeklyData, podcastData) => {
     title: 'Home',
     tabSystemImg: 'house',
     onButtonPressed(e) {
+      console.log('home selected!!!')
+      console.log({e})
+
       const data = HOME_TAB_DATA.find((item) => item.id === e.id)
       onHomeItemPress(data)
     },
   })
 
-  let editionsTab: any = null;
-
-  editionsTab = new GridTemplate({
+  const editionsTab = new GridTemplate({
+    trailingNavigationBarButtons: [],
+    buttons: editionRefs.map((item, i) => ({
+      id: item.ref,
+      image: item.image,
+      titleVariants: [item.date],
+    })),
     title: 'Editions',
-    buttons: [weeklyData.editions],
-    onButtonPressed: async ({ index }) => {
-      onEditionPress(weeklyData.editions[index])
+    tabSystemImg: 'magazine',
+    onButtonPressed(e) {
+      console.log('edition selected!!!')
+      console.log({e})
+
+      onEditionPress(e.id)
     },
-    tabSystemImg: 'magazine'
   })
 
   const podcastTab = new ListTemplate({
@@ -132,20 +180,31 @@ const getTabBarTemplates = (weeklyData, podcastData) => {
     tabSystemImg: 'magnifyingglass'
   })
 
-  return [homeTab, weeklyTab, podcastTab, queueTab, searchTab]
+  return [homeTab, weeklyTab, editionsTab, podcastTab, queueTab, searchTab]
 }
 
-const onEditionPress = async (edition) => {
-  console.log({ edition })
-  const weekly = await fetchWeekly(edition.id);
+const onEditionPress = async (id) => {
+  // console.log({ edition })
+  const weekly = await fetchWeekly(id);
   console.log({ weekly })
 
   const templ = new ListTemplate({
-    id: `${edition.date}`,
-    sections: edition.sections,
-    title: `Weekly - ${edition.date}`,
-    onItemSelect: async ({ index }) => {
-      onArticlePress(edition.articles[index])
+    id: `${weekly.datePublished}`,
+    sections: weekly.sections,
+    title: `Weekly - ${weekly.datePublished}`,
+
+    async onItemSelect(e) {
+      const clickedItem = weekly.items[e.index];
+      const article = weekly.articles.find((item) => item.title === clickedItem.text)
+
+      if (article) {
+        const articleDetails = {
+          articleTitle: article.print?.title || article.title,
+          audioUrl: article.audio?.main?.url?.canonical,
+          tegID: article.tegID
+        }
+        onArticlePress(articleDetails)
+      };
     },
   })
 
@@ -288,7 +347,7 @@ export const App = () => {
   });
 
   useEffect(() => {
-    Promise.all([fetchContent(DEC24_REF, editionRefs), fetchPodcasts()]).then(([weeklyData, podcastData]) => {
+    Promise.all([fetchContent(DEC24_REF, editionRefs.map((er) => er.ref)), fetchPodcasts()]).then(([weeklyData, podcastData]) => {
       const templates = getTabBarTemplates(weeklyData, podcastData);
 
       tabBarRef.current?.updateTemplates({

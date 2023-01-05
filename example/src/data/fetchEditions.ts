@@ -53,8 +53,9 @@ const fetchEditions = async (paths: string[]) => {
         })
       }
     })
+    const date = data.data.section.datePublished.substring(0, 10);
 
-    return { articles: audioArticles, items, sections, date: data.data.section.datePublished.substring(0, 10)}
+    return { ref: path, articles: audioArticles, items, sections, date}
   });
   return Promise.all(editions);
 }

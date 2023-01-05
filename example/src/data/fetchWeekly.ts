@@ -21,6 +21,8 @@ const fetchWeekly = async (path: string) => {
 
   const data = await response.json()
 
+  const datePublished = data.data.section.datePublished.substring(0, 10);
+
   const articles: Part[] = data.data.section.hasPart.parts
 
   const audioArticles = articles.filter((article) => article.audio?.main)
@@ -53,7 +55,7 @@ const fetchWeekly = async (path: string) => {
     }
   })
 
-  return { articles: audioArticles, items, sections }
+  return { articles: audioArticles, items, sections, datePublished }
 }
 
 export default fetchWeekly
