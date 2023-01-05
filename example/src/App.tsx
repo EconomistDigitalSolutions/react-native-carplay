@@ -122,7 +122,6 @@ const getTabBarTemplates = (weeklyData, podcastData) => {
       }
       onAudioPress(articleDetails)
     },
-    tabTitle: 'Queue',
     tabSystemImg: 'list.triangle'
   })
 
@@ -133,7 +132,6 @@ const getTabBarTemplates = (weeklyData, podcastData) => {
     onActionButtonPressed: () => {
       CarPlay.pushTemplate(searchTemplate)
     },
-    tabTitle: 'Search',
     tabSystemImg: 'magnifyingglass'
   })
 
@@ -170,7 +168,8 @@ const onHomeItemPress = async (data) => {
 
   CarPlay.pushTemplate(pageTemplate);
 }
-const onAudioPress = (audioTrack: AudioTrack) => {
+
+export const onAudioPress = (audioTrack: AudioTrack) => {
   const currentAudioTrack = queue.getCurrentTrack()
   const isPlaying = currentAudioTrack?.title === audioTrack.title
 
@@ -205,12 +204,6 @@ const onAudioPress = (audioTrack: AudioTrack) => {
           }
 
           CarPlay.dismissTemplate();
-
-          // CarPlay.pushTemplate(new NowPlayingTemplate({
-          //   albumArtistButton: false,
-          //   upNextTitle: 'Next',
-          //   upNextButton: false
-          // }), true)
 
           break;
         }

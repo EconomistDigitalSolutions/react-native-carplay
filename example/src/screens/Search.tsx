@@ -1,6 +1,6 @@
 
 import { CarPlay, ListTemplate, SearchTemplate } from 'react-native-carplay';
-import { onArticlePress } from '../App';
+import { onAudioPress } from '../App';
 import { search } from '../data/search';
 
 let query = ''
@@ -24,11 +24,11 @@ export const searchTemplate = new SearchTemplate({
         onItemSelect: async ({ index }) => {
           const result = searchResults[index];
           const resultDetails = {
-            articleTitle: result.canonical?.headline,
-            audioUrl: result.canonical.audio?.main?.url?.canonical,
-            tegID: result.canonical.id
+            title: result.canonical?.headline,
+            url: result.canonical.audio?.main?.url?.canonical,
+            id: result.canonical.id
           }
-          onArticlePress(resultDetails)
+          onAudioPress(resultDetails)
         }
       }))
     })
