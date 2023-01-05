@@ -1,7 +1,9 @@
-import fetchWeekly from "./fetchWeekly";
+import { ListItem } from "react-native-carplay/lib/interfaces/ListItem";
+import { ListSection } from "react-native-carplay/lib/interfaces/ListSection";
+import { Part } from "../types/content";
 
 const fetchEditions = async (paths: string[]) => {
-  return await Promise.all(paths.map(async path => {
+  const editions = paths.map(async (path) => {
     var myHeaders = new Headers();
     myHeaders.append("Content-Type", "application/json");
 
@@ -20,12 +22,42 @@ const fetchEditions = async (paths: string[]) => {
 
     const data = await response.json()
 
-    return {
-      id: path,
-      titleVariants: [data.data.section.datePublished],
-      image: data.data.section.image.cover[0].url.canonical,
-    }
-  }))
+    const articles: Part[] = data.data.section.hasPart.parts
+
+    const audioArticles = articles.filter((article) => article.audio?.main)
+
+    const items: ListItem[] = audioArticles.map((article) => ({
+      text: article.title
+    }))
+
+    const sections: ListSection[] = []
+
+    audioArticles.forEach((article) => {
+      const articleSection = article.articleSection?.internal?.length && article.articleSection?.internal?.length > 0 && article.articleSection?.internal[0]
+
+      if (articleSection) {
+        const sectionTitle = articleSection.title;
+        let sectionIndex = sections.findIndex((s) => s.header === sectionTitle)
+
+        if (sectionIndex === -1) {
+          sections.push({
+            header: sectionTitle,
+            items: []
+          })
+
+          sectionIndex = sections.length - 1
+        }
+
+        sections[sectionIndex].items.push({
+          text: article.print?.title || article.title
+        })
+      }
+    })
+    const date = data.data.section.datePublished.substring(0, 10);
+
+    return { ref: path, articles: audioArticles, items, sections, date}
+  });
+  return Promise.all(editions);
 }
 
 export default fetchEditions
