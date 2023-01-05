@@ -4,8 +4,9 @@ import { CarPlay, InformationTemplate, ListTemplate, TabBarTemplate, AlertTempla
 import { Part, BlogType, CollectionType } from './types/content';
 import fetchWeekly from './data/fetchWeekly';
 import fetchData from './data/fetchData';
-import queue from './data/queue';
 import { searchTemplate } from './screens/Search';
+import queue, { AudioTrack } from './data/queue';
+import fetchPodcasts from './data/fetchPodcasts';
 import { GridButton } from 'react-native-carplay/lib/interfaces/GridButton';
 import { Editions } from './screens/Editions';
 
@@ -61,7 +62,7 @@ const HOME_TAB_DATA = [
   },
 ]
 
-const getTabBarTemplates = (articles, sections) => {
+const getTabBarTemplates = (weeklyData, podcastData) => {
   const homeTab = new GridTemplate({
     trailingNavigationBarButtons: [],
     buttons: HOME_TAB_DATA.map((item, i) => ({
@@ -79,20 +80,28 @@ const getTabBarTemplates = (articles, sections) => {
 
   const weeklyTab = new ListTemplate({
     id: 'weekly',
-    sections: sections,
+    sections: weeklyData.sections,
     title: 'Weekly',
     onItemSelect: async ({ index }) => {
-      const article = articles[index]
-      const articleDetails = {
-        articleTitle: article.print?.title || article.title,
-        audioUrl: article.audio?.main?.url?.canonical,
-        tegID: article.tegID
+      const article = weeklyData.articles[index]
+      const audioTrack = {
+        id: article.tegID,
+        title: article.print?.title || article.title,
+        url: article.audio?.main?.url?.canonical
       }
-      onArticlePress(articleDetails)
+      onAudioPress(audioTrack)
     },
-    tabTitle: 'Weekly',
     tabSystemImg: 'magazine'
   });
+
+  const podcastTab = new ListTemplate({
+    title: 'Podcasts',
+    sections: podcastData.sections,
+    onItemSelect: async ({ index }) => {
+      onAudioPress(podcastData.podcasts[index])
+    },
+    tabSystemImg: 'list.triangle'
+  })
 
   const queueTab = new ListTemplate({
     title: 'Queue',
@@ -105,13 +114,13 @@ const getTabBarTemplates = (articles, sections) => {
       }
     ],
     onItemSelect: async ({ index }) => {
-      const article = articles[index]
+      const article = weeklyData.articles[index]
       const articleDetails = {
-        articleTitle: article.print?.title || article.title,
-        audioUrl: article.audio?.main?.url?.canonical,
-        tegID: article.tegID
+        title: article.print?.title || article.title,
+        url: article.audio?.main?.url?.canonical,
+        id: article.tegID
       }
-      onArticlePress(articleDetails)
+      onAudioPress(articleDetails)
     },
     tabTitle: 'Queue',
     tabSystemImg: 'list.triangle'
@@ -128,7 +137,7 @@ const getTabBarTemplates = (articles, sections) => {
     tabSystemImg: 'magnifyingglass'
   })
 
-  return [homeTab, weeklyTab, queueTab, searchTab]
+  return [homeTab, weeklyTab, podcastTab, queueTab, searchTab]
 }
 
 const onHomeItemPress = async (data) => {
@@ -150,23 +159,23 @@ const onHomeItemPress = async (data) => {
 
       if (article) {
         const articleDetails = {
-          articleTitle: article.print?.title || article.title,
-          audioUrl: article.audio?.main?.url?.canonical,
-          tegID: article.tegID
+          title: article.print?.title || article.title,
+          url: article.audio?.main?.url?.canonical || '',
+          id: article.tegID
         }
-        onArticlePress(articleDetails)
+        onAudioPress(articleDetails)
       };
     },
   })
 
   CarPlay.pushTemplate(pageTemplate);
 }
-export const onArticlePress = ({articleTitle, audioUrl, tegID}: {articleTitle: any, audioUrl: any, tegID: any}) => {
+const onAudioPress = (audioTrack: AudioTrack) => {
   const currentAudioTrack = queue.getCurrentTrack()
-  const isPlaying = currentAudioTrack?.title === articleTitle
+  const isPlaying = currentAudioTrack?.title === audioTrack.title
 
   const alertTemplate = new AlertTemplate({
-    titleVariants: [ articleTitle],
+    titleVariants: [ audioTrack.title],
     actions: [
       isPlaying ? {
         id: 'stop',
@@ -187,11 +196,11 @@ export const onArticlePress = ({articleTitle, audioUrl, tegID}: {articleTitle: a
     onActionButtonPressed: ({ id }) => {
       switch (id) {
         case 'play': {
-          if (audioUrl) {
+          if (audioTrack.url) {
             queue.play({
-              id: tegID,
-              title: articleTitle,
-              url: audioUrl
+              id: audioTrack.id,
+              title: audioTrack.title,
+              url: audioTrack.url
             })
           }
 
@@ -206,7 +215,7 @@ export const onArticlePress = ({articleTitle, audioUrl, tegID}: {articleTitle: a
           break;
         }
         case 'stop': {
-          if (audioUrl) {
+          if (audioTrack.url) {
             queue.stop()
           }
 
@@ -214,11 +223,11 @@ export const onArticlePress = ({articleTitle, audioUrl, tegID}: {articleTitle: a
           break;
         }
         case 'queue': {
-          if (audioUrl) {
+          if (audioTrack.url) {
             queue.add({
-              id: tegID,
-              title: articleTitle,
-              url: audioUrl
+              id: audioTrack.id,
+              title: audioTrack.title,
+              url: audioTrack.url
             })
           }
 
@@ -271,9 +280,9 @@ export const App = () => {
   });
 
   useEffect(() => {
-    fetchWeekly(DEC24_REF).then(({ articles, sections }) => {
+    Promise.all([fetchWeekly(DEC24_REF), fetchPodcasts()]).then(([weeklyData, podcastData]) => {
+      const templates = getTabBarTemplates(weeklyData, podcastData);
 
-      const templates = getTabBarTemplates(articles, sections)
       tabBarRef.current?.updateTemplates({
         templates,
         onTemplateSelect: () => { }
@@ -282,7 +291,7 @@ export const App = () => {
       queue.addListener(() => {
         const currentAudioTrack = queue.getCurrentTrack();
 
-        sections.forEach((section) => {
+        weeklyData.sections.forEach((section) => {
           section.items.forEach((article) => {
             if (currentAudioTrack?.title === article.text) {
               article.isPlaying = true
@@ -292,7 +301,7 @@ export const App = () => {
           })
         })
 
-        const templates = getTabBarTemplates(articles, sections)
+        const templates = getTabBarTemplates(weeklyData, podcastData)
 
         tabBarRef.current?.updateTemplates({
           templates,

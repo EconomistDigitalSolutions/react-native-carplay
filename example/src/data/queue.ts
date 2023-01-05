@@ -1,6 +1,6 @@
 import SoundPlayer from 'react-native-sound-player'
 
-type AudioTrack = {
+export type AudioTrack = {
   id: string
   url: string
   title: string

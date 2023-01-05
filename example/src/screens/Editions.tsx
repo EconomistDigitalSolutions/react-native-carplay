@@ -49,6 +49,6 @@ export function Editions() {
   );
 }
 
-TabBar.navigationOptions = {
-  headerTitle: 'TabBar Template',
+Editions.navigationOptions = {
+  headerTitle: 'Editions Template',
 };
