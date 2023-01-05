@@ -8,11 +8,11 @@ import { searchTemplate } from './screens/Search';
 import queue, { AudioTrack } from './data/queue';
 import fetchPodcasts from './data/fetchPodcasts';
 import { GridButton } from 'react-native-carplay/lib/interfaces/GridButton';
-import { Editions } from './screens/Editions';
+import fetchContent from './data/fetchContent';
+import { waitForDebugger } from 'inspector';
 
 export type RootStackParamList = {
-  Editions: {}
-  TabBar: {edition: GridButton }
+  TabBar: {}
   NowPlaying: { article: Part }
 }
 
@@ -61,6 +61,8 @@ const HOME_TAB_DATA = [
     image: require('./images/briefing.jpeg')
   },
 ]
+const editionRefs = [DEC24_REF, DEC17_REF, DEC10_REF];
+
 
 const getTabBarTemplates = (weeklyData, podcastData) => {
   const homeTab = new GridTemplate({
@@ -78,21 +80,16 @@ const getTabBarTemplates = (weeklyData, podcastData) => {
     },
   })
 
-  const weeklyTab = new ListTemplate({
-    id: 'weekly',
-    sections: weeklyData.sections,
-    title: 'Weekly',
-    onItemSelect: async ({ index }) => {
-      const article = weeklyData.articles[index]
-      const audioTrack = {
-        id: article.tegID,
-        title: article.print?.title || article.title,
-        url: article.audio?.main?.url?.canonical
-      }
-      onAudioPress(audioTrack)
+  let editionsTab: any = null;
+
+  editionsTab = new GridTemplate({
+    title: 'Editions',
+    buttons: [weeklyData.editions],
+    onButtonPressed: async ({ index }) => {
+      onEditionPress(weeklyData.editions[index])
     },
     tabSystemImg: 'magazine'
-  });
+  })
 
   const podcastTab = new ListTemplate({
     title: 'Podcasts',
@@ -136,6 +133,20 @@ const getTabBarTemplates = (weeklyData, podcastData) => {
   })
 
   return [homeTab, weeklyTab, podcastTab, queueTab, searchTab]
+}
+
+const onEditionPress = async (edition: GridButton) => {
+  const weekly = await fetchWeekly(edition.id);
+
+  new ListTemplate({
+    id: 'weekly',
+    sections: weekly.sections,
+    title: 'Weekly',
+    onItemSelect: async ({ index }) => {
+      onArticlePress(weekly.articles[index])
+    },
+    tabSystemImg: 'house'
+  })
 }
 
 const onHomeItemPress = async (data) => {
@@ -273,7 +284,7 @@ export const App = () => {
   });
 
   useEffect(() => {
-    Promise.all([fetchWeekly(DEC24_REF), fetchPodcasts()]).then(([weeklyData, podcastData]) => {
+    Promise.all([fetchContent(DEC24_REF, editionRefs), fetchPodcasts()]).then(([weeklyData, podcastData]) => {
       const templates = getTabBarTemplates(weeklyData, podcastData);
 
       tabBarRef.current?.updateTemplates({
