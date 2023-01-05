@@ -7,13 +7,7 @@ import fetchData from './data/fetchData';
 import { searchTemplate } from './screens/Search';
 import queue, { AudioTrack } from './data/queue';
 import fetchPodcasts from './data/fetchPodcasts';
-import { GridButton } from 'react-native-carplay/lib/interfaces/GridButton';
 import fetchContent from './data/fetchContent';
-
-export type RootStackParamList = {
-  TabBar: {}
-  NowPlaying: { article: Part }
-}
 
 const JAN07_REF= "/content/j50lppop61q39rnpaienm2hb8r8h68u7"
 const DEC24_REF = "/content/f0e872f2ipoun91v1goki0jb4va2v5ei"
@@ -22,13 +16,9 @@ const DEC10_REF = "/content/c6btp3bpqls69m9ivokt8da56jdi2iti"
 const DEC03_REF = "/content/5gkcciopitck0ing7tq6ur4fmh2gr75a"
 const NOV26_REF = "/content/b12a1v4b9rjhr486lc6aoak121ltmf4n"
 const NOV19_REF = "/content/4degdgvqgnu7ttph0h31fbv8rsbaq96o"
+const searchImage = require('./images/search.png')
 
 const HOME_TAB_DATA = [
-  {
-    id: '/content/omi23dr8h15h8c33t2gkb2cju8ap758o',
-    title: 'Podcasts',
-    image: require('./images/e.png')
-  },
   {
     id: '/content/g4qu1flbgau1di0dvenri74a2pdelkko',
     title: 'Morning Briefing',
@@ -40,27 +30,27 @@ const HOME_TAB_DATA = [
     image: require('./images/business.png')
   },
   {
-    id: '/content/i-dont-know-the-id',
+    id: '/content/h4u9v391l483f78oe4pku4pu3jsqgj9k',
     title: 'Finance',
     image: require('./images/f&e.png')
   },
   {
-    id: '/content/i-dont-know-the-id',
+    id: '/content/rak941tjj66itoj6cbc8e8nb40kuij19',
     title: 'International',
     image: require('./images/int.png')
   },
   {
-    id: '/content/i-dont-know-the-id',
+    id: '/content/rvj2s19g2lkbek4tevm6sn1va1se84sl',
     title: 'Culture',
     image: require('./images/culture.png')
   },
   {
-    id: '/content/i-dont-know-the-id',
+    id: '/content/2ldk64u3gt7tku874lf6kfi40e2nvts6',
     title: 'Britain',
     image: require('./images/britain.png')
   },
   {
-    id: '/content/i-dont-know-the-id',
+    id: '/content/ig92fd080i1j2q35gel3sev1e8r72j9r',
     title: 'Briefing',
     image: require('./images/briefing.jpeg')
   },
@@ -106,19 +96,32 @@ const editionRefs = [
 const getTabBarTemplates = (weeklyData, podcastData) => {
   const homeTab = new GridTemplate({
     trailingNavigationBarButtons: [],
-    buttons: HOME_TAB_DATA.map((item, i) => ({
+    buttons: [...HOME_TAB_DATA.map((item, i) => ({
       id: item.id,
       image: item.image,
       titleVariants: [item.title],
-    })),
+    })), {
+      id: 'Search',
+      image: searchImage,
+      titleVariants: ['Search']
+    } ],
     title: 'Home',
     tabSystemImg: 'house',
     onButtonPressed(e) {
-      console.log('home selected!!!')
-      console.log({e})
-
-      const data = HOME_TAB_DATA.find((item) => item.id === e.id)
-      onHomeItemPress(data)
+      if (e.id === 'Search') {
+        CarPlay.pushTemplate(new InformationTemplate({
+          title: 'Search',
+          items: [],
+          actions: [{id: 'search', title: 'search'}],
+          onActionButtonPressed: () => {
+            CarPlay.pushTemplate(searchTemplate)
+          },
+          tabSystemImg: 'magnifyingglass'
+        }))
+      } else {
+        const data = HOME_TAB_DATA.find((item) => item.id === e.id)
+        onHomeItemPress(data)
+      }
     },
   })
 
@@ -130,14 +133,27 @@ const getTabBarTemplates = (weeklyData, podcastData) => {
       titleVariants: [item.date],
     })),
     title: 'Editions',
-    tabSystemImg: 'magazine',
+    tabSystemImg: 'books.vertical',
     onButtonPressed(e) {
-      console.log('edition selected!!!')
-      console.log({e})
-
       onEditionPress(e.id)
     },
   })
+
+  const weeklyTab = new ListTemplate({
+    id: 'weekly',
+    sections: weeklyData.sections,
+    title: 'Weekly',
+    onItemSelect: async ({ index }) => {
+      const article = weeklyData.articles[index]
+      const audioTrack = {
+        id: article.tegID,
+        title: article.print?.title || article.title,
+        url: article.audio?.main?.url?.canonical
+      }
+      onAudioPress(audioTrack)
+    },
+    tabSystemImg: 'magazine'
+  });
 
   const podcastTab = new ListTemplate({
     title: 'Podcasts',
@@ -145,7 +161,7 @@ const getTabBarTemplates = (weeklyData, podcastData) => {
     onItemSelect: async ({ index }) => {
       onAudioPress(podcastData.podcasts[index])
     },
-    tabSystemImg: 'list.triangle'
+    tabSystemImg: 'beats.headphones'
   })
 
   const queueTab = new ListTemplate({
@@ -170,23 +186,11 @@ const getTabBarTemplates = (weeklyData, podcastData) => {
     tabSystemImg: 'list.triangle'
   })
 
-  const searchTab = new InformationTemplate({
-    title: 'Search',
-    items: [],
-    actions: [{id: 'search', title: 'search'}],
-    onActionButtonPressed: () => {
-      CarPlay.pushTemplate(searchTemplate)
-    },
-    tabSystemImg: 'magnifyingglass'
-  })
-
-  return [homeTab, weeklyTab, editionsTab, podcastTab, queueTab, searchTab]
+  return [homeTab, weeklyTab, editionsTab, podcastTab, queueTab ]
 }
 
 const onEditionPress = async (id) => {
-  // console.log({ edition })
   const weekly = await fetchWeekly(id);
-  console.log({ weekly })
 
   const templ = new ListTemplate({
     id: `${weekly.datePublished}`,
@@ -199,17 +203,14 @@ const onEditionPress = async (id) => {
 
       if (article) {
         const articleDetails = {
-          articleTitle: article.print?.title || article.title,
-          audioUrl: article.audio?.main?.url?.canonical,
-          tegID: article.tegID
+          title: article.print?.title || article.title,
+          url: article.audio?.main?.url?.canonical || '',
+          id: article.tegID
         }
-        onArticlePress(articleDetails)
+        onAudioPress(articleDetails)
       };
     },
   })
-
-  console.log({ templ })
-  console.log('PUSHING!')
   CarPlay.pushTemplate(templ)
 }
 
@@ -277,6 +278,7 @@ export const onAudioPress = (audioTrack: AudioTrack) => {
               url: audioTrack.url
             })
           }
+
           CarPlay.dismissTemplate();
 
           break;
@@ -356,8 +358,6 @@ export const App = () => {
       });
 
       queue.addListener(() => {
-        console.log({listeners: queue.getListeners()})
-
         const currentAudioTrack = queue.getCurrentTrack();
 
         weeklyData.sections.forEach((section) => {
@@ -380,8 +380,6 @@ export const App = () => {
     })
 
     TabBar(tabBarRef)
-
-    CarPlay.enableNowPlaying(true);
   }, [])
 
   return carPlayConnected ? (

@@ -1,10 +1,10 @@
 import fetchEditions from "./fetchEditions";
 import fetchWeekly from "./fetchWeekly";
 
-const fetchContent = async (path: string, paths: string[]) => {
-  const editions = await fetchEditions(paths)
+const fetchContent = async (weeklyPath: string, editionPaths: string[]) => {
+  const editions = await fetchEditions(editionPaths)
   console.log({ editions })
-  const weekly = await fetchWeekly(path)
+  const weekly = await fetchWeekly(weeklyPath)
 
   return {articles: weekly.articles, items: weekly.items, sections: weekly.sections, editions}
 }

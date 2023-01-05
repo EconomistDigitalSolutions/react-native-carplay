@@ -85,10 +85,6 @@ class AudioQueue {
       listener(this.audioTracks)
     })
   }
-
-  public getListeners() {
-    return this.listeners;
-  }
 }
 
 export default new AudioQueue()

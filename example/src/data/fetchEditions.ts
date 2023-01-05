@@ -4,7 +4,7 @@ import { Part } from "../types/content";
 
 const fetchEditions = async (paths: string[]) => {
   const editions = paths.map(async (path) => {
-      var myHeaders = new Headers();
+    var myHeaders = new Headers();
     myHeaders.append("Content-Type", "application/json");
 
     var graphql = JSON.stringify({
