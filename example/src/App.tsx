@@ -135,22 +135,23 @@ const getTabBarTemplates = (weeklyData, podcastData) => {
   return [homeTab, weeklyTab, podcastTab, queueTab, searchTab]
 }
 
-const onEditionPress = async (edition: GridButton) => {
+const onEditionPress = async (edition) => {
   console.log({ edition })
   const weekly = await fetchWeekly(edition.id);
   console.log({ weekly })
 
   const templ = new ListTemplate({
-    id: 'weekly',
-    sections: weekly.sections,
-    title: 'Weekly',
+    id: `${edition.date}`,
+    sections: edition.sections,
+    title: `Weekly - ${edition.date}`,
     onItemSelect: async ({ index }) => {
-      onArticlePress(weekly.articles[index])
+      onArticlePress(edition.articles[index])
     },
-    tabSystemImg: 'house'
   })
 
   console.log({ templ })
+  console.log('PUSHING!')
+  CarPlay.pushTemplate(templ)
 }
 
 const onHomeItemPress = async (data) => {
@@ -217,7 +218,6 @@ export const onAudioPress = (audioTrack: AudioTrack) => {
               url: audioTrack.url
             })
           }
-
           CarPlay.dismissTemplate();
 
           break;
@@ -297,6 +297,8 @@ export const App = () => {
       });
 
       queue.addListener(() => {
+        console.log({listeners: queue.getListeners()})
+
         const currentAudioTrack = queue.getCurrentTrack();
 
         weeklyData.sections.forEach((section) => {
